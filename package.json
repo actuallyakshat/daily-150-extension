@@ -1,7 +1,7 @@
 {
   "name": "daily-150",
   "displayName": "Daily 150",
-  "version": "0.0.1",
+  "version": "0.5",
   "description": "A chrome extension that blocks access to social media websites for a user until they journal at daily150.actuallyakshat.in",
   "author": "Akshat Dubey <akshatdubey0808@gmail.com>",
   "scripts": {
@@ -28,6 +28,9 @@
   "manifest": {
     "host_permissions": [
       "https://*/*"
+    ],
+    "permissions": [
+      "storage"
     ]
   }
 }
