@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ["Chakra Petch", "sans-serif"]
+        display: ["JetBrains Mono", "monospace"]
       }
     }
   }

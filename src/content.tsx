@@ -57,31 +57,74 @@ const isSocialMediaSite = (): boolean => {
 
 const PlasmoOverlay = () => {
   const [showOverlay, setShowOverlay] = useState<boolean>(false)
+  const [didUserJournalToday, setDidUserJournalToday] = useState<boolean>(false)
+  const [loading, setLoading] = useState(true)
+  const [userHasTemporaryAccess, setUserHasTemporaryAccess] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    chrome.runtime.sendMessage({ action: "checkJournalStatus" }, (response) => {
+      if (response && response.status !== undefined) {
+        setDidUserJournalToday(response.status)
+      } else {
+        console.error("Invalid response from background script:", response)
+      }
+      setLoading(false)
+    })
+  }, [])
 
   useEffect(() => {
     function updateOverlayState() {
-      chrome.storage.local.get("isActive", (result) => {
+      chrome.storage.local.get(["isActive", "temporaryAccess"], (result) => {
         setShowOverlay(result.isActive ?? false)
+        setUserHasTemporaryAccess(result.temporaryAccess ?? false)
       })
     }
     updateOverlayState()
 
-    chrome.storage.onChanged.addListener((changes) => {
+    // Create a unified storage change listener
+    const handleStorageChanges = (changes) => {
       if (changes.isActive) {
         setShowOverlay(changes.isActive.newValue)
       }
-    })
 
-    return () => {
-      chrome.storage.onChanged.removeListener((changes) => {
-        if (changes.isActive) {
-          setShowOverlay(changes.isActive.newValue)
+      if (changes.temporaryAccess) {
+        setUserHasTemporaryAccess(changes.temporaryAccess.newValue)
+
+        // When temporary access expires, we need to show the overlay again
+        // but only if the extension is active
+        if (changes.temporaryAccess.newValue === false) {
+          chrome.storage.local.get("isActive", (result) => {
+            if (result.isActive) {
+              setShowOverlay(true)
+            }
+          })
         }
-      })
+      }
+    }
+
+    // Add the unified listener
+    chrome.storage.onChanged.addListener(handleStorageChanges)
+
+    // Clean up
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChanges)
     }
   }, [])
 
-  if (!isSocialMediaSite() || !showOverlay) {
+  console.log("HERE IS A SUMMARY OF THE STATE : ")
+  console.log("showOverlay", showOverlay)
+  console.log("didUserJournalToday", didUserJournalToday)
+  console.log("loading", loading)
+  console.log("userHasTemporaryAccess", userHasTemporaryAccess)
+
+  if (
+    !isSocialMediaSite() ||
+    !showOverlay ||
+    didUserJournalToday ||
+    loading ||
+    userHasTemporaryAccess
+  ) {
     return null
   }
 
@@ -92,13 +135,18 @@ const PlasmoOverlay = () => {
         Journal at{" "}
         <a
           className="hover:plasmo-underline plasmo-text-lime-500"
-          href="https://daily150.actuallyakshat.in">
+          href="https://daily150.actuallyakshat.in/dashboard">
           daily150.actuallyakshat.in
         </a>
       </p>
 
-      <button className="plasmo-mt-5 plasmo-font-medium plasmo-transition-colors hover:plasmo-text-red-600">
-        Allow for 15 minutes
+      <button
+        className="plasmo-mt-5 plasmo-font-medium plasmo-transition-colors hover:plasmo-text-red-600"
+        onClick={() => {
+          chrome.runtime.sendMessage({ action: "allowTemporaryAccess" })
+          setShowOverlay(false)
+        }}>
+        Allow for 5 minutes
       </button>
     </div>
   )

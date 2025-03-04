@@ -1,7 +1,7 @@
 {
   "name": "daily-150",
-  "displayName": "Daily 150",
-  "version": "0.5",
+  "displayName": "Daily 150 Consistency",
+  "version": "1.0",
   "description": "A chrome extension that blocks access to social media websites for a user until they journal at daily150.actuallyakshat.in",
   "author": "Akshat Dubey <akshatdubey0808@gmail.com>",
   "scripts": {
@@ -10,9 +10,11 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "axios": "^1.8.1",
     "plasmo": "0.90.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-router": "^7.2.0",
     "tailwindcss": "3.4.1"
   },
   "devDependencies": {
@@ -30,7 +32,16 @@
       "https://*/*"
     ],
     "permissions": [
-      "storage"
+      "storage",
+      "cookies"
+    ]
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@swc/core"
+    ],
+    "onlyBuiltDependencies": [
+      "@swc/core"
     ]
   }
 }

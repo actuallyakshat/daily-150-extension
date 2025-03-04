@@ -1,32 +1,21 @@
-import { useEffect, useState } from "react"
+import { MemoryRouter, Route, Routes } from "react-router"
+
+import Homepage from "~components/homepage"
+import LoginPage from "~components/login-page"
+import { ApplicationContextProvider } from "~context/application-context"
 
 import "~style.css"
 
 function IndexPopup() {
-  const [isActive, setIsActive] = useState<boolean>(false)
-
-  useEffect(() => {
-    chrome.storage.local.get("isActive", (result) => {
-      setIsActive(result.isActive ?? false)
-    })
-  }, [])
-
-  async function toggleIsActive(isActiveStatus: boolean) {
-    await chrome.storage.local.set({ isActive: isActiveStatus })
-    setIsActive(isActiveStatus)
-  }
-
   return (
-    <div className="plasmo-flex plasmo-flex-col plasmo-items-center plasmo-justify-center plasmo-h-[300px] plasmo-gap-3 plasmo-w-[300px] plasmo-bg-black plasmo-text-white">
-      <h1 className="plasmo-text-2xl plasmo-font-extrabold">
-        Daily 150 Support
-      </h1>
-      <button
-        className={`plasmo-px-4 plasmo-py-2 ${isActive ? "plasmo-bg-lime-700 plasmo-text-white" : "plasmo-bg-white plasmo-text-black"} plasmo-rounded-md plasmo-hover:plasmo-bg-lime-600 plasmo-cursor-pointer`}
-        onClick={() => toggleIsActive(!isActive)}>
-        {isActive ? "Currently blocking socials" : "Currently inactive"}
-      </button>
-    </div>
+    <MemoryRouter>
+      <ApplicationContextProvider>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </ApplicationContextProvider>
+    </MemoryRouter>
   )
 }
 
