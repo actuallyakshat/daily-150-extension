@@ -16,6 +16,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(username, password)
+      await chrome.storage.local.set({ isActive: true })
       console.log("Successfully logged in")
       navigate("/")
     } catch (error) {

@@ -5,11 +5,9 @@ async function checkJournalStatus() {
     console.log("CHECKING JOURNAL STATUS")
 
     const serverURL = process.env.PLASMO_PUBLIC_SERVER_URL
-
-    console.log("SERVER URL  = ", serverURL)
     const token = await chrome.storage.local.get("token")
 
-    if (!token) {
+    if (!token || Object.keys(token).length === 0) {
       console.error("No token found")
       return
     }
@@ -31,26 +29,36 @@ async function checkJournalStatus() {
   }
 }
 
-let temporaryAccessTimeout
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === "temporaryAccessEnd") {
+    await chrome.storage.local.set({ temporaryAccess: false })
+  }
+})
 
 async function allowTemporaryAccess() {
-  if (temporaryAccessTimeout) {
-    await chrome.storage.local.set({ temporaryAccess: false })
-    clearTimeout(temporaryAccessTimeout)
-  }
+  await chrome.storage.local.set({
+    temporaryAccess: true,
+    temporaryAccessExpiry: Date.now() + 5 * 60 * 1000
+  })
 
-  chrome.storage.local.set({ temporaryAccess: true })
-
-  temporaryAccessTimeout = setTimeout(
-    async () => {
-      await chrome.storage.local.set({ temporaryAccess: false })
-    },
-    5 * 60 * 1000
-  )
+  chrome.alarms.clear("temporaryAccessEnd")
+  chrome.alarms.create("temporaryAccessEnd", { delayInMinutes: 5 })
 }
 
-chrome.runtime.onInstalled.addListener(async () => {
-  chrome.storage.local.set({ temporaryAccess: false })
+async function checkAndRestoreState() {
+  const { temporaryAccessExpiry } = await chrome.storage.local.get(
+    "temporaryAccessExpiry"
+  )
+
+  if (temporaryAccessExpiry && Date.now() >= temporaryAccessExpiry) {
+    await chrome.storage.local.set({ temporaryAccess: false })
+  }
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === "temporaryAccessEnd") {
+    await chrome.storage.local.set({ temporaryAccess: false })
+  }
 })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -63,3 +71,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
 })
+
+chrome.runtime.onInstalled.addListener(async () => {
+  chrome.storage.local.set({ temporaryAccess: false })
+  chrome.storage.local.set({ isActive: false })
+})
+
+chrome.runtime.onStartup.addListener(checkAndRestoreState)

@@ -29,11 +29,11 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "https://daily150.actuallyakshat.in/*"
     ],
     "permissions": [
       "storage",
-      "cookies"
+      "alarms"
     ]
   },
   "pnpm": {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router"
 
 import { useApplicationContext } from "~context/application-context"
@@ -9,9 +9,21 @@ export default function Homepage() {
   const [isActive, setIsActive] = useState<boolean>(true)
 
   useEffect(() => {
+    const handleStorageChange = (changes, areaName) => {
+      if (areaName === "local" && changes.isActive) {
+        setIsActive(changes.isActive.newValue ?? false)
+      }
+    }
+
     chrome.storage.local.get("isActive", (result) => {
       setIsActive(result.isActive ?? false)
     })
+
+    chrome.storage.onChanged.addListener(handleStorageChange)
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange)
+    }
   }, [])
 
   async function toggleIsActive(isActiveStatus: boolean) {
